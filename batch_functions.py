@@ -4,7 +4,7 @@ import os
 001
 计算 yz_sum 通过 s_final
 '''
-def putout_yz_sum(s_final:int,quality_model:str,ye:float,s_ref:int):
+def putout_yz_sum(s_final:int,quality_model:str,ye:float,s_ref:float):
     s = 5
     yz_sum = []
     while s <= s_final:
@@ -80,6 +80,42 @@ def marge_y_sum_with_ye(quality_model:str,ye:float):
         f.writelines(yz_sum_str)
     print(f'已生成 marge_ye_{ye} 文件')
 
+
+'''
+003
+检索某一核素 yz、yz_sum 随 s 的变化
+'''
+def output_yz_vs_s(quality_model:str,ye:float,z:int):
+    path_dir_yz = f'./data/abundance_thuxreply/{quality_model}/Ye_{ye}'
+    path_dir_yz_sum = f'./data/y_sum/{quality_model}/Ye_{ye}'
+    yz_vs_s = []
+    for s in range(5,401,5):
+        one_s = [s]
+        path_yz = os.path.join(path_dir_yz,f'yz_s{s}')
+        with open(path_yz,'r',encoding='utf-8',newline='\n') as f:
+            for line in f:
+                line = line.strip()
+                if line == '':
+                    continue
+                parts = line.split()
+                if int(parts[0]) == z:
+                    one_s.append(float(parts[1]))
+        path_yz_sum = os.path.join(path_dir_yz_sum,f'yz_s_final{s}')
+        with open(path_yz_sum,'r',encoding='utf-8',newline='\n') as f:
+            for line in f:
+                line = line.strip()
+                if line == '':
+                    continue
+                parts = line.split()
+                if int(parts[0]) == z:
+                    one_s.append(float(parts[1]))
+        yz_vs_s.append(one_s)
+    content = [ f'{yz_vs_s[i][0]}  {yz_vs_s[i][1]}  {yz_vs_s[i][2]}\n' for i in range(len(yz_vs_s))]
+    path_yz_vs_s = os.path.join(path_dir_yz,f'yz_vs_s_{z}')
+    with open(path_yz_vs_s,'w',encoding='utf-8',newline='\n') as f:
+        f.write(f'# {quality_model} ye:{ye}\n\n# s 或 s_final  yz  yz_sum\n\n')
+        f.writelines(content)
+    print(f'已生成 yz_vs_s_{z}')
 
 
 
