@@ -26,6 +26,9 @@ def putout_yz_sum(s_final:int,quality_model:str,ye:float,s_ref:float):
                 if search == 0:
                     yz_sum.append([int(parts[0]),new_y])
         s += 5
+    for i in range(len(yz_sum)):
+        if yz_sum[i][1] <= s_ref/1e7 :
+            yz_sum[i][1] = 0
     yz_sum_str = [ f'{i[0]} {i[1]}\n' for i in yz_sum]
     path_dir_out = f'./data/y_sum/{quality_model}/Ye_{ye}'
     os.makedirs(path_dir_out,exist_ok=True)
@@ -61,6 +64,14 @@ def marge_y_sum_with_ye(quality_model:str,ye:float):
                         if yz_sum[i][0] == int(parts[0]):
                             yz_sum[i].append(float(parts[1]))
                             break
+    search = 1
+    while search != 0:
+        search = 0
+        for i in range(len(yz_sum)):
+            if yz_sum[i][-1] == 0:
+                search = 1
+                del yz_sum[i]
+                break
     path_marge = os.path.join(path_dir_y_sum,f'marge_ye_{ye}')
     with open(path_marge,'w',encoding='utf-8',newline='\n') as f:
         header_str = ''
