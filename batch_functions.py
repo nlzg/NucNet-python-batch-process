@@ -2,7 +2,8 @@ import os
 
 '''
 001
-计算 yz_sum 通过 s_final
+计算 yz_sum 通过 s_final,将极小的数值置零
+建议 s_final = 50000
 '''
 def putout_yz_sum(s_final:int,quality_model:str,ye:float,s_ref:float):
     s = 5
@@ -42,6 +43,7 @@ def putout_yz_sum(s_final:int,quality_model:str,ye:float,s_ref:float):
 002
 合并同一个 ye 下的 y_sum 文件
 表头为：z  s_5  s_10  ...
+剔除了 y_sum = 0 的核素
 '''
 def marge_y_sum_with_ye(quality_model:str,ye:float):
     path_dir_y_sum = f'./data/y_sum/{quality_model}/Ye_{ye}'
@@ -129,8 +131,68 @@ def output_yz_vs_s(quality_model:str,ye:float,z:int):
     print(f'已生成 yz_vs_s_{z}')
 
 
+'''
+004
+合并同一个 s_final 下的 y_sum 文件
+表头为：z  ye_0.4  ye_0.45  ...
+剔除了 y_sum = 0 的核素
+'''
+def marge_y_sum_with_s_final(quality_model:str,s_final:int):
+    header = ['z']
+    yz_sum = []
+    ye = 0.4
+    end = 0.481
+    step = 0.005
+    while ye < end:
+        header.append(f'ye_{ye:.3}')
+        path_y_sum = os.path.join('./','data','y_sum',f'{quality_model}',f'Ye_{ye:.3}',f'yz_s_final{s_final}')
+        with open(path_y_sum,'r',encoding='utf-8',newline='\n') as f:
+            if len(yz_sum) == 0:
+                for line in f:
+                    line = line.strip()
+                    if line == '':
+                        continue
+                    parts = line.split()
+                    yz_sum.append([int(parts[0]),float(parts[1])])
+            else:
+                for line in f:
+                    line = line.strip()
+                    if line == '':
+                        continue
+                    parts = line.split()
+                    for i in range(len(yz_sum)):
+                        if yz_sum[i][0] == int(parts[0]):
+                            yz_sum[i].append(float(parts[1]))
+                            break
+        ye += step
+    search = 1
+    while search != 0:
+        search = 0
+        for i in range(len(yz_sum)):
+            if yz_sum[i][-1] == 0:
+                search = 1
+                del yz_sum[i]
+                break
+    path_marge = os.path.join('./','data','y_sum',f'{quality_model}',f'marge_s_final_{s_final}')
+    with open(path_marge,'w',encoding='utf-8',newline='\n') as f:
+        header_str = ''
+        for i in header:
+            header_str += f'{i}  '
+        header_str = header_str.strip()
+        header_str += '\n'
+        f.write(header_str)
+        yz_sum_str = []
+        for i in range(len(yz_sum)):
+            comment = ''
+            for j in range(len(yz_sum[i])):
+                comment += f'{yz_sum[i][j]}  '
+            comment = comment.strip()
+            comment += '\n'
+            yz_sum_str.append(comment)
+        f.writelines(yz_sum_str)
+    print(f'已生成 marge_s_final_{s_final} 文件')
 
 
-
+marge_y_sum_with_s_final(quality_model='ws4',s_final=300)
 
 
