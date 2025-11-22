@@ -27,7 +27,7 @@ def putout_yz_sum(s_final:int,quality_model:str,ye:float,s_ref:float):
                     yz_sum.append([int(parts[0]),new_y])
         s += 5
     for i in range(len(yz_sum)):
-        if yz_sum[i][1] <= s_ref/1e7 :
+        if yz_sum[i][1] <= s_ref/1e8 :
             yz_sum[i][1] = 0
     yz_sum_str = [ f'{i[0]} {i[1]}\n' for i in yz_sum]
     path_dir_out = f'./data/y_sum/{quality_model}/Ye_{ye}'
