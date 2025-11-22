@@ -110,12 +110,13 @@ def output_yz_vs_s(quality_model:str,ye:float,z:int):
                 if int(parts[0]) == z:
                     one_s.append(float(parts[1]))
         yz_vs_s.append(one_s)
-    content = [ f'{yz_vs_s[i][0]}  {yz_vs_s[i][1]}  {yz_vs_s[i][2]}\n' for i in range(len(yz_vs_s))]
+    content = [ f'{yz_vs_s[i][0]}  {yz_vs_s[i][1]:.4e}  {yz_vs_s[i][2]:.4e}\n' for i in range(len(yz_vs_s))]
     path_yz_vs_s = os.path.join(path_dir_yz,f'yz_vs_s_{z}')
     with open(path_yz_vs_s,'w',encoding='utf-8',newline='\n') as f:
         f.write(f'# {quality_model} ye:{ye}\n\n# s 或 s_final  yz  yz_sum\n\n')
         f.writelines(content)
     print(f'已生成 yz_vs_s_{z}')
+
 
 
 
