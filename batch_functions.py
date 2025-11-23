@@ -45,7 +45,7 @@ def putout_yz_sum(s_final:int,quality_model:str,ye:float,s_ref:float):
 表头为：z  s_5  s_10  ...
 剔除了 y_sum = 0 的核素
 '''
-def marge_y_sum_with_ye(quality_model:str,ye:float):
+def marge_y_sum_about_ye(quality_model:str, ye:float):
     path_dir_y_sum = f'./data/y_sum/{quality_model}/Ye_{ye}'
     header = ['z']
     yz_sum = []
@@ -137,7 +137,7 @@ def output_yz_vs_s(quality_model:str,ye:float,z:int):
 表头为：z  ye_0.4  ye_0.45  ...
 剔除了 y_sum = 0 的核素
 '''
-def marge_y_sum_with_s_final(quality_model:str,s_final:int):
+def marge_y_sum_about_s_final(quality_model:str, s_final:int):
     header = ['z']
     yz_sum = []
     ye = 0.4
@@ -193,6 +193,55 @@ def marge_y_sum_with_s_final(quality_model:str,s_final:int):
     print(f'已生成 marge_s_final_{s_final} 文件')
 
 
-marge_y_sum_with_s_final(quality_model='ws4',s_final=300)
+'''
+005
+对齐函数：使文件中某一核素的 y_sum 对齐到某一指定的值 align_y
+'''
+def align_marge_for_z(z:int,align_y:float,path_marge:str):
+    ks = []
+    comtents = []
+    with open(path_marge,'r',encoding='utf-8',newline='\n') as f:
+        for line in f:
+            line = line.strip()
+            parts = line.split()
+            comtent = ''
+            for i in range(len(parts)):
+                comtent += f'{parts[i]}  '
+            comtent = comtent.strip()
+            comtent += '\n'
+            comtents.append(comtent)
+            break
+    with open(path_marge, 'r', encoding='utf-8', newline='\n') as f:
+        for line in f:
+            line = line.strip()
+            if line == '' or line[0] == 'z':
+                continue
+            parts = line.split()
+            if int(parts[0]) == z:
+                for i in range(1,len(parts)):
+                    if float(parts[i]) == 0.0:
+                        print(f'z = {z} 时，存在 y_sum = 0，不能对齐')
+                        return False
+                    k = align_y / float(parts[i])
+                    ks.append(k)
+                break
+    with open(path_marge, 'r', encoding='utf-8', newline='\n') as f:
+        for line in f:
+            line = line.strip()
+            if line == '' or line[0] == 'z':
+                continue
+            parts = line.split()
+            for i in range(1,len(parts)):
+                parts[i] = float(parts[i])
+                parts[i] *= ks[i - 1]
+            comtent = ''
+            for i in range(len(parts)):
+                comtent += f'{parts[i]}  '
+            comtent = comtent.strip()
+            comtent += '\n'
+            comtents.append(comtent)
+    with open(path_marge,'w',encoding='utf-8',newline='\n') as f:
+        f.writelines(comtents)
+    print(f'已将 {path_marge} 文件中 z = {z} 的 y_sum 对齐')
 
 
