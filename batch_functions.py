@@ -1,4 +1,6 @@
+import math
 import os
+
 
 '''
 001
@@ -245,3 +247,92 @@ def align_marge_for_z(z:int,align_y:float,path_marge:str):
     print(f'已将 {path_marge} 文件中 z = {z} 的 y_sum 对齐')
 
 
+'''
+006
+当 ye 一定时，计算一系列 s_final 所得出的星体年龄，并输出时钟同步时的 s_final 和年龄
+可选：输出年龄随时间变化数据文件
+'''
+def output_age_by_ye(ye:float,quality_model:str,stellar:str):
+    z = []
+    y_x_pre = []
+    path_dir_stellar = f'./data/stellar/{stellar}'
+    path_y_pre = os.path.join(path_dir_stellar,'abundance_pre')
+    with open(path_y_pre,'r',encoding='utf-8',newline='\n') as f:
+        for line in f:
+            line = line.strip()
+            if line == '' or line[0] == 'z':
+                continue
+            parts = line.split()
+            if parts[0] == '90':
+                y_th_pre = float(parts[1])
+            elif parts[0] == '92':
+                y_u_pre = float(parts[1])
+            else:
+                z.append(int(parts[0]))
+                y_x_pre.append(float(parts[1]))
+    th_x_i_pre = [y_th_pre / x for x in y_x_pre]
+    u_x_i_pre = [y_u_pre / x for x in y_x_pre]
+    th_u_pre = y_th_pre / y_u_pre
+
+    path_dir_y_ini = f'./data/y_sum/{quality_model}/Ye_{ye}'
+    path_y_ini = os.path.join(path_dir_y_ini,f'marge_ye_{ye}')
+    with open(path_y_ini,'r',encoding='utf-8',newline='\n') as f:
+        for line in f:
+            parts = line.split()
+            s_finals = [int(part[2:]) for part in parts if part != 'z']
+            break
+
+    path_age_by_ye_dir = f'./data/stellar/{stellar}/{quality_model}'
+    os.makedirs(path_age_by_ye_dir, exist_ok=True)
+    path_age_by_ye = os.path.join(path_age_by_ye_dir,f'ye_{ye}')
+    with open(path_age_by_ye,'w',encoding='utf-8',newline='\n') as f:
+        f.writelines(f's_final  th/x  u/x  th/u\n')
+    y_x_ini = []
+    for s_final in s_finals:
+        y_x_ini.clear()
+        unsuitable = False
+        with open(path_y_ini,'r',encoding='utf-8',newline='\n') as f:
+            inedx = s_finals.index(s_final) + 1
+            for line in f:
+                line = line.strip()
+                if line == '' or line[0] == 'z':
+                    continue
+                parts = line.split()
+                if int(parts[0]) == 90:
+                    if float(parts[inedx]) == 0.0:
+                        unsuitable = True
+                        break
+                    y_th_ini = float(parts[inedx])
+                elif int(parts[0]) == 92:
+                    if float(parts[inedx]) == 0.0:
+                        unsuitable = True
+                        break
+                    y_u_ini = float(parts[inedx])
+                elif int(parts[0]) in z:
+                    if float(parts[inedx]) == 0.0:
+                        unsuitable = True
+                        break
+                    y_x_ini.append(float(parts[inedx]))
+        if unsuitable:
+            continue
+        th_x_i_ini = [y_th_ini / x for x in y_x_ini]
+        u_x_i_ini = [y_u_ini / x for x in y_x_ini]
+        th_u_ini = y_th_ini / y_u_ini
+        age_th_x_i = []
+        for i in range(len(z)):
+            age = 46.67 * ( math.log10( th_x_i_ini[i] ) - math.log10( th_x_i_pre[i] ) )
+            age_th_x_i.append(age)
+        age_th_x = sum(age_th_x_i) / len(age_th_x_i)
+        age_u_x_i = []
+        for i in range(len(z)):
+            age = 14.84 * ( math.log10( u_x_i_ini[i] ) - math.log10( u_x_i_pre[i] ) )
+            age_u_x_i.append(age)
+        age_u_x = sum(age_u_x_i) / len(age_u_x_i)
+        age_th_u = -21.8 * (math.log10( th_u_ini ) - math.log10( th_u_pre ) )
+        with open(path_age_by_ye,'a',encoding='utf-8',newline='\n') as f:
+            f.writelines(f'{s_final}  {age_th_x}  {age_u_x}  {age_th_u}\n')
+
+
+
+
+output_age_by_ye(ye=0.45, quality_model='ws4', stellar='J2038−0023',)
