@@ -288,6 +288,7 @@ def output_age_by_ye(ye:float,quality_model:str,stellar:str):
     with open(path_age_by_ye,'w',encoding='utf-8',newline='\n') as f:
         f.writelines(f's_final  th/x  u/x  th/u\n')
     y_x_ini = []
+    s_2_min = 10000.0
     for s_final in s_finals:
         y_x_ini.clear()
         unsuitable = False
@@ -331,6 +332,23 @@ def output_age_by_ye(ye:float,quality_model:str,stellar:str):
         age_th_u = -21.8 * (math.log10( th_u_ini ) - math.log10( th_u_pre ) )
         with open(path_age_by_ye,'a',encoding='utf-8',newline='\n') as f:
             f.writelines(f'{s_final}  {age_th_x}  {age_u_x}  {age_th_u}\n')
+
+        averge = (age_th_x + age_u_x + age_th_u) / 3
+        s_2 = (age_th_x - averge) ** 2 + (age_u_x - averge) ** 2 + (age_th_u - averge) ** 2
+        if s_2 < s_2_min:
+            s_2_min = s_2
+            best_age = averge
+            best_s_final = s_final
+
+    path_age = os.path.join(path_age_by_ye_dir,f'ages')
+    with open(path_age,'a+',encoding='utf-8',newline='\n') as f:
+        comtents = []
+        if os.path.getsize(path_age) == 0:
+            comtents.append('ye  s_final  age\n')
+        comtents.append(f'{ye}  {best_s_final}  {best_age}\n')
+        f.writelines(comtents)
+
+    print(f'{quality_model} 利用 {quality_model} 质量模型在 ye={ye} 条件下的年龄计算完成')
 
 
 
