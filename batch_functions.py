@@ -252,7 +252,7 @@ def align_marge_for_z(z:int,align_y:float,path_marge:str):
 当 ye 一定时，计算一系列 s_final 所得出的星体年龄，并输出时钟同步时的 s_final 和年龄
 可选：输出年龄随时间变化数据文件
 '''
-def output_age_by_ye(ye:float,quality_model:str,stellar:str):
+def output_age_by_ye(ye:float,quality_model:str,stellar:str,s_ref:int):
     z = []
     y_x_pre = []
     path_dir_stellar = f'./data/stellar/{stellar}'
@@ -288,7 +288,6 @@ def output_age_by_ye(ye:float,quality_model:str,stellar:str):
     with open(path_age_by_ye,'w',encoding='utf-8',newline='\n') as f:
         f.writelines(f's_final  th/x  u/x  th/u\n')
     y_x_ini = []
-    s_2_min = 10000.0
     for s_final in s_finals:
         y_x_ini.clear()
         unsuitable = False
@@ -316,6 +315,7 @@ def output_age_by_ye(ye:float,quality_model:str,stellar:str):
                     y_x_ini.append(float(parts[inedx]))
         if unsuitable:
             continue
+        y_u_ini = get_u238_y_sum(quality_model=quality_model,ye=ye,s_final=s_final,s_ref=s_ref)
         th_x_i_ini = [y_th_ini / x for x in y_x_ini]
         u_x_i_ini = [y_u_ini / x for x in y_x_ini]
         th_u_ini = y_th_ini / y_u_ini
@@ -333,24 +333,56 @@ def output_age_by_ye(ye:float,quality_model:str,stellar:str):
         with open(path_age_by_ye,'a',encoding='utf-8',newline='\n') as f:
             f.writelines(f'{s_final}  {age_th_x}  {age_u_x}  {age_th_u}\n')
 
-        averge = (age_th_x + age_u_x + age_th_u) / 3
-        s_2 = (age_th_x - averge) ** 2 + (age_u_x - averge) ** 2 + (age_th_u - averge) ** 2
-        if s_2 < s_2_min:
-            s_2_min = s_2
-            best_age = averge
-            best_s_final = s_final
+    with open(path_age_by_ye,'r',encoding='utf-8',newline='\n') as f:
+        change = 0
+        for line in f:
+            line = line.strip()
+            if line == '' or line[0] == 's':
+                continue
+            parts = line.split()
+            if float(parts[3]) > float(parts[2]):
+                th_u_a = float(parts[3])
+                u_x_a = float(parts[2])
+                s_final_a = int(parts[0])
+            else:
+                th_u_b = float(parts[3])
+                u_x_b = float(parts[2])
+                s_final_b = int(parts[0])
+                change = 1
+                break
+        if change == 1:
+            best_s_final = (s_final_b - s_final_a) * (th_u_a - u_x_a) / (th_u_a - u_x_a + u_x_b - th_u_b) + s_final_a
+            best_age = (th_u_b - th_u_a) * (th_u_a - u_x_a) / (th_u_a - u_x_a + u_x_b - th_u_b) + th_u_a
+
 
     path_age = os.path.join(path_age_by_ye_dir,f'ages')
-    with open(path_age,'a+',encoding='utf-8',newline='\n') as f:
-        comtents = []
-        if os.path.getsize(path_age) == 0:
-            comtents.append('ye  s_final  age\n')
-        comtents.append(f'{ye}  {best_s_final}  {best_age}\n')
-        f.writelines(comtents)
+    if change == 1:
+        with open(path_age,'a+',encoding='utf-8',newline='\n') as f:
+            comtents = []
+            if os.path.getsize(path_age) == 0:
+                comtents.append('ye  s_final  age\n')
+            comtents.append(f'{ye}  {best_s_final}  {best_age}\n')
+            f.writelines(comtents)
 
     print(f'{quality_model} 利用 {quality_model} 质量模型在 ye={ye} 条件下的年龄计算完成')
 
 
+'''
+007
+计算 u238 在 s_final 下的 y_sum 
+'''
+def get_u238_y_sum(quality_model:str, ye:float, s_final:int, s_ref:int):
+    path_u238_dir = f'./data/abundance_thuxreply/{quality_model}/Ye_{ye}'
+    y_sum = 0.0
+    for s in range(5,s_final+1,5):
+        path_u238 = os.path.join(path_u238_dir,f'yza_S{s}')
+        with open(path_u238,'r',encoding='utf-8',newline='\n') as f:
+            for line in f:
+                line = line.strip()
+                if line == '':
+                    continue
+                parts = line.split()
+                if int(parts[0]) == 92 and int(parts[1]) == 238:
+                    y_sum += float(parts[2]) * s_ref / s
+    return y_sum
 
-
-output_age_by_ye(ye=0.45, quality_model='ws4', stellar='J2038−0023',)
