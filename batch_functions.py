@@ -38,7 +38,7 @@ def putout_yz_sum(s_final:int,quality_model:str,ye:float,s_ref:float):
     path_out = os.path.join(path_dir_out,f'yz_s_final{s_final}')
     with open(path_out,'w',encoding='utf-8',newline='\n') as f:
         f.writelines(yz_sum_str)
-    print(f'基于质量模型{quality_model},ye = {ye},s_final = {s_final} 的 ye_sum 计算完成')
+    # print(f'基于质量模型{quality_model},ye = {ye},s_final = {s_final} 的 ye_sum 计算完成')
 
 
 '''
@@ -273,6 +273,7 @@ def output_age_by_ye(ye:float,quality_model:str,stellar:str,s_ref:int):
     th_x_i_pre = [y_th_pre / x for x in y_x_pre]
     u_x_i_pre = [y_u_pre / x for x in y_x_pre]
     th_u_pre = y_th_pre / y_u_pre
+    a = len(z)
 
     path_dir_y_ini = f'./data/y_sum/{quality_model}/Ye_{ye}'
     path_y_ini = os.path.join(path_dir_y_ini,f'marge_ye_{ye}')
@@ -288,8 +289,11 @@ def output_age_by_ye(ye:float,quality_model:str,stellar:str,s_ref:int):
     with open(path_age_by_ye,'w',encoding='utf-8',newline='\n') as f:
         f.writelines(f's_final  th/x  u/x  th/u\n')
     y_x_ini = []
+    z_ini = []
+    no_z = []
     for s_final in s_finals:
         y_x_ini.clear()
+        z_ini.clear()
         unsuitable = False
         with open(path_y_ini,'r',encoding='utf-8',newline='\n') as f:
             inedx = s_finals.index(s_final) + 1
@@ -313,20 +317,38 @@ def output_age_by_ye(ye:float,quality_model:str,stellar:str,s_ref:int):
                         unsuitable = True
                         break
                     y_x_ini.append(float(parts[inedx]))
+                    z_ini.append(int(parts[0]))
+
         if unsuitable:
             continue
+        b = len(z_ini)
+        no_z.clear()
+        if a != b:
+            for i in range(len(z)):
+                if z[i] not in z_ini:
+                    no_z.append(z[i])
         y_u_ini = get_u238_y_sum(quality_model=quality_model,ye=ye,s_final=s_final,s_ref=s_ref)
         th_x_i_ini = [y_th_ini / x for x in y_x_ini]
         u_x_i_ini = [y_u_ini / x for x in y_x_ini]
         th_u_ini = y_th_ini / y_u_ini
         age_th_x_i = []
         for i in range(len(z)):
-            age = 46.67 * ( math.log10( th_x_i_ini[i] ) - math.log10( th_x_i_pre[i] ) )
+            d = 0
+            if z[i] in no_z:
+                d = no_z.index(z[i])
+                continue
+            j = i - d
+            age = 46.67 * ( math.log10( th_x_i_ini[j] ) - math.log10( th_x_i_pre[i] ) )
             age_th_x_i.append(age)
         age_th_x = sum(age_th_x_i) / len(age_th_x_i)
         age_u_x_i = []
         for i in range(len(z)):
-            age = 14.84 * ( math.log10( u_x_i_ini[i] ) - math.log10( u_x_i_pre[i] ) )
+            d = 0
+            if z[i] in no_z:
+                d = no_z.index(z[i])
+                continue
+            j = i - d
+            age = 14.84 * ( math.log10( u_x_i_ini[j] ) - math.log10( u_x_i_pre[i] ) )
             age_u_x_i.append(age)
         age_u_x = sum(age_u_x_i) / len(age_u_x_i)
         age_th_u = -21.8 * (math.log10( th_u_ini ) - math.log10( th_u_pre ) )
@@ -386,3 +408,35 @@ def get_u238_y_sum(quality_model:str, ye:float, s_final:int, s_ref:int):
                     y_sum += float(parts[2]) * s_ref / s
     return y_sum
 
+
+'''
+集合了上述函数：通过 r 过程模拟结果，预测星体的年龄
+'''
+def output_stellar_age(stellar:str):
+    s_ref = 50000
+    quality_models = os.listdir(f'./data/abundance_thuxreply')
+    for i in range(len(quality_models)):
+        if quality_models[i] == 'output':
+            del quality_models[i]
+            break
+
+    for quality_model in quality_models:
+        path_ye_dir = f'./data/abundance_thuxreply/{quality_model}'
+        yes = os.listdir(path_ye_dir)
+        for i in range(len(yes)):
+            yes[i] = yes[i][3:]
+        path_age_dir = f'./data/stellar/{stellar}/{quality_model}'
+        os.makedirs(path_age_dir,exist_ok=True)
+        path_age = os.path.join(path_age_dir, 'ages')
+        with open(path_age, 'w', encoding='utf-8', newline='\n') as f:
+            f.write('')
+        for ye in yes:
+            for s_final in range(5, 401, 5):
+                putout_yz_sum(s_final=s_final, quality_model=quality_model, ye=float(ye), s_ref=s_ref)
+            marge_y_sum_about_ye(quality_model=quality_model, ye=float(ye))
+            output_age_by_ye(quality_model=quality_model, ye=float(ye), stellar=stellar, s_ref=s_ref)
+
+    print(f'天体 {stellar} 的年龄计算完成')
+
+# output_stellar_age('J2038−0023')
+# output_age_by_ye(ye=0.455, quality_model='hfb24', stellar='J2038−0023', s_ref=50000)
