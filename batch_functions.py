@@ -45,7 +45,7 @@ def putout_yz_sum(s_final:int,quality_model:str,ye:float,s_ref:float):
 002
 合并同一个 ye 下的 y_sum 文件
 表头为：z  s_5  s_10  ...
-剔除了 y_sum = 0 的核素
+剔除了 y_sum 全为零的核素
 '''
 def marge_y_sum_about_ye(quality_model:str, ye:float):
     path_dir_y_sum = f'./data/y_sum/{quality_model}/Ye_{ye}'
@@ -410,9 +410,32 @@ def get_u238_y_sum(quality_model:str, ye:float, s_final:int, s_ref:int):
 
 
 '''
+008
+将天体的观测丰度从 log 转化为 float
+'''
+def stellar_abundance_from_log_to_float(stellar:str):
+    path_dir = f'./data/stellar/{stellar}'
+    path_log = os.path.join(path_dir,'abundance_log')
+    comtents = ['z  abundance\n']
+    with open(path_log,'r',encoding='utf-8',newline='\n') as f:
+        for line in f:
+            line = line.strip()
+            if line == '' or line[0] == 'z':
+                continue
+            parts = line.split()
+            z = int(parts[0])
+            abundance = 10 ** float(parts[1])
+            comtents.append(f'{z}  {abundance}\n')
+    path_pre = os.path.join(path_dir,'abundance_pre')
+    with open(path_pre,'w',encoding='utf-8',newline='\n') as f:
+        f.writelines(comtents)
+
+
+'''
 集合了上述函数：通过 r 过程模拟结果，预测星体的年龄
 '''
 def output_stellar_age(stellar:str):
+    stellar_abundance_from_log_to_float(stellar)
     s_ref = 50000
     quality_models = os.listdir(f'./data/abundance_thuxreply')
     for i in range(len(quality_models)):
