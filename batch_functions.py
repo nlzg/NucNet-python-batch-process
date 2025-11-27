@@ -432,11 +432,77 @@ def stellar_abundance_from_log_to_float(stellar:str):
 
 
 '''
+009
+误差分析
+'''
+def analysis_age_error(stellar:str):
+    path_dir = f'./data/stellar/{stellar}'
+    quality_models = os.listdir(path_dir)
+    ages = []
+    for quality_model in quality_models:
+        if os.path.isdir(os.path.join(path_dir,quality_model)):
+            pass
+        else:
+            continue
+        path_age = os.path.join(path_dir,quality_model,'ages')
+        with open(path_age,'r',encoding='utf-8',newline='\n') as f:
+            for line in f:
+                line = line.strip()
+                if line == '' or line[0] == 'y':
+                    continue
+                parts = line.split()
+                ages.append(float(parts[2]))
+    max_age = max(ages)
+    min_age = min(ages)
+    middle_age = (max_age + min_age) / 2
+    error_quality_models = (max_age - min_age) / 2
+    range_quality_models = (min_age, max_age)
+
+    path_observe_dir = f'./data/stellar/{stellar}'
+    path_observe = os.path.join(path_observe_dir,'abundance_log')
+    error_x_i = []
+    with open(path_observe,'r',encoding='utf-8',newline='\n') as f:
+        for line in f:
+            line = line.strip()
+            if line == '' or line[0] == 'z':
+                continue
+            parts = line.split()
+            if int(parts[0]) == 90:
+                error_th = max([float(parts[2]),float(parts[3])])
+            elif int(parts[0]) == 92:
+                error_u = max([float(parts[2]),float(parts[3])])
+            else :
+                error_x_i.append(max([float(parts[2]),float(parts[3])]))
+    error_th_x_2_i = [ (46.67 * (i ** 2 + error_th ** 2) ** 0.5) ** 2 for i in error_x_i ]
+    error_th_x = sum(error_th_x_2_i) ** 0.5 / len(error_th_x_2_i)
+    error_u_x_2_i = [ (14.84 * (i ** 2 + error_u ** 2) ** 0.5) ** 2 for i in error_x_i ]
+    error_u_x = sum(error_u_x_2_i) ** 0.5 / len(error_u_x_2_i)
+    error_th_u = 21.80 * (error_th ** 2 + error_u ** 2) ** 0.5
+    error_th_u_x = (error_th_u ** 2 + error_th_x ** 2 + error_u_x ** 2) ** 0.5 / 3
+    range_th_u_x = (middle_age - error_th_u_x, middle_age + error_th_u_x)
+
+    error_all = error_quality_models + error_th_u_x
+    range_all = (middle_age - error_all, middle_age + error_all)
+
+    path_analysis = os.path.join(path_dir,'analysis')
+    with open(path_analysis, 'w',encoding='utf-8',newline='\n') as f:
+        comtents = [f'middle_age\t{middle_age}\n',
+                    f'error_quality_model\t{error_quality_models}\n',
+                    f'error_th_u_x\t{error_th_u_x}\n',
+                    f'error_all\t{error_all}\n',
+                    '\n',
+                    'staller  range_quality_model[1]  middle_age  range_quality_model[0]  error_all\n',
+                    f'{stellar}  {range_quality_models[1]}  {middle_age}  {range_quality_models[0]}  {error_all}\n',]
+        f.writelines(comtents)
+
+
+'''
 集合了上述函数：通过 r 过程模拟结果，预测星体的年龄
 '''
 def output_stellar_age(stellar:str):
     stellar_abundance_from_log_to_float(stellar)
     s_ref = 50000
+
     quality_models = os.listdir(f'./data/abundance_thuxreply')
     for i in range(len(quality_models)):
         if quality_models[i] == 'output':
@@ -459,7 +525,7 @@ def output_stellar_age(stellar:str):
             marge_y_sum_about_ye(quality_model=quality_model, ye=float(ye))
             output_age_by_ye(quality_model=quality_model, ye=float(ye), stellar=stellar, s_ref=s_ref)
 
+    analysis_age_error(stellar)
+
     print(f'天体 {stellar} 的年龄计算完成')
 
-# output_stellar_age('J2038−0023')
-# output_age_by_ye(ye=0.455, quality_model='hfb24', stellar='J2038−0023', s_ref=50000)
