@@ -386,7 +386,7 @@ def output_age_by_ye(ye:float,quality_model:str,stellar:str,s_ref:int):
             comtents.append(f'{ye}  {best_s_final}  {best_age}\n')
             f.writelines(comtents)
 
-    print(f'{quality_model} 利用 {quality_model} 质量模型在 ye={ye} 条件下的年龄计算完成')
+    print(f'{stellar} 利用 {quality_model} 质量模型在 ye={ye} 条件下的年龄计算完成')
 
 
 '''
