@@ -4,10 +4,10 @@ import os
 
 '''
 001
-计算 yz_sum 通过 s_final,将极小的数值置零
+计算 yz_sum 通过给定的 s_final,将极小的计算结果置零
 建议 s_final = 50000
 '''
-def putout_yz_sum(s_final:int,quality_model:str,ye:float,s_ref:float):
+def putout_yz_sum(s_final:int,quality_model:str,ye:float,s_ref:int):
     s = 5
     yz_sum = []
     while s <= s_final:
@@ -16,7 +16,7 @@ def putout_yz_sum(s_final:int,quality_model:str,ye:float,s_ref:float):
         with open(path_yz,'r',encoding='utf-8',newline='\n') as f:
             for line in f:
                 line = line.strip()
-                if line == '':
+                if line == '' or line[0] == '#':
                     continue
                 parts = line.split()
                 new_y = float(parts[1]) * s_ref / s
@@ -68,14 +68,18 @@ def marge_y_sum_about_ye(quality_model:str, ye:float):
                         if yz_sum[i][0] == int(parts[0]):
                             yz_sum[i].append(float(parts[1]))
                             break
-    search = 1
-    while search != 0:
+    length = len(yz_sum)
+    count = 0
+    for i in range(length):
         search = 0
-        for i in range(len(yz_sum)):
-            if yz_sum[i][-1] == 0:
+        for j in range(1,len(yz_sum[i - count])):
+            if yz_sum[i - count][j] != 0:
                 search = 1
-                del yz_sum[i]
                 break
+        if search == 0:
+            del yz_sum[i - count]
+            count += 1
+
     path_marge = os.path.join(path_dir_y_sum,f'marge_ye_{ye}')
     with open(path_marge,'w',encoding='utf-8',newline='\n') as f:
         header_str = ''
@@ -93,7 +97,7 @@ def marge_y_sum_about_ye(quality_model:str, ye:float):
             comment += '\n'
             yz_sum_str.append(comment)
         f.writelines(yz_sum_str)
-    print(f'已生成 marge_ye_{ye} 文件')
+    # print(f'已生成 marge_ye_{ye} 文件')
 
 
 '''
@@ -250,9 +254,9 @@ def align_marge_for_z(z:int,align_y:float,path_marge:str):
 '''
 006
 当 ye 一定时，计算一系列 s_final 所得出的星体年龄，并输出时钟同步时的 s_final 和年龄
-可选：输出年龄随时间变化数据文件
 '''
 def output_age_by_ye(ye:float,quality_model:str,stellar:str,s_ref:int):
+    # 读取观测的核素及其丰度比
     z = []
     y_x_pre = []
     path_dir_stellar = f'./data/stellar/{stellar}'
@@ -273,8 +277,8 @@ def output_age_by_ye(ye:float,quality_model:str,stellar:str,s_ref:int):
     th_x_i_pre = [y_th_pre / x for x in y_x_pre]
     u_x_i_pre = [y_u_pre / x for x in y_x_pre]
     th_u_pre = y_th_pre / y_u_pre
-    a = len(z)
 
+    # 读取 s_final 列表
     path_dir_y_ini = f'./data/y_sum/{quality_model}/Ye_{ye}'
     path_y_ini = os.path.join(path_dir_y_ini,f'marge_ye_{ye}')
     with open(path_y_ini,'r',encoding='utf-8',newline='\n') as f:
@@ -283,15 +287,20 @@ def output_age_by_ye(ye:float,quality_model:str,stellar:str,s_ref:int):
             s_finals = [int(part[2:]) for part in parts if part != 'z']
             break
 
+    # 为 ./data/stellar/{stellar}/{quality_model}/ye_{ye} 文件写入表头
     path_age_by_ye_dir = f'./data/stellar/{stellar}/{quality_model}'
     os.makedirs(path_age_by_ye_dir, exist_ok=True)
     path_age_by_ye = os.path.join(path_age_by_ye_dir,f'ye_{ye}')
     with open(path_age_by_ye,'w',encoding='utf-8',newline='\n') as f:
         f.writelines(f's_final  th/x  u/x  th/u\n')
+
+    # 计算各个 s_final 下的年龄
     y_x_ini = []
     z_ini = []
     no_z = []
     for s_final in s_finals:
+        # 读取 r 过程模拟的丰度，如果需要稳定核素丰度为零，则跳过该核素；如果 Th 或 U 的丰度为零，则跳过该 s_final
+        # 同时记录被跳过的稳定核素，如果全部被跳过，则跳过该 s_final
         y_x_ini.clear()
         z_ini.clear()
         unsuitable = False
@@ -299,7 +308,7 @@ def output_age_by_ye(ye:float,quality_model:str,stellar:str,s_ref:int):
             inedx = s_finals.index(s_final) + 1
             for line in f:
                 line = line.strip()
-                if line == '' or line[0] == 'z':
+                if line == '' or line[0] == 'z' or line[0] == '#':
                     continue
                 parts = line.split()
                 if int(parts[0]) == 90:
@@ -314,38 +323,40 @@ def output_age_by_ye(ye:float,quality_model:str,stellar:str,s_ref:int):
                     y_u_ini = float(parts[inedx])
                 elif int(parts[0]) in z:
                     if float(parts[inedx]) == 0.0:
-                        unsuitable = True
-                        break
+                        continue
                     y_x_ini.append(float(parts[inedx]))
                     z_ini.append(int(parts[0]))
-
-        if unsuitable:
+        if unsuitable or len(z_ini) == 0:
             continue
+        # 找出所有丰度为零的稳定核素
+        a = len(z)
         b = len(z_ini)
         no_z.clear()
         if a != b:
             for i in range(len(z)):
                 if z[i] not in z_ini:
                     no_z.append(z[i])
+        # 计算 r 过程模拟的丰度比
         y_u_ini = get_u238_y_sum(quality_model=quality_model,ye=ye,s_final=s_final,s_ref=s_ref)
         th_x_i_ini = [y_th_ini / x for x in y_x_ini]
         u_x_i_ini = [y_u_ini / x for x in y_x_ini]
         th_u_ini = y_th_ini / y_u_ini
+        # 计算该 s_final 下的年龄
         age_th_x_i = []
+        d = 0
         for i in range(len(z)):
-            d = 0
             if z[i] in no_z:
-                d = no_z.index(z[i])
+                d = no_z.index(z[i]) + 1
                 continue
             j = i - d
             age = 46.67 * ( math.log10( th_x_i_ini[j] ) - math.log10( th_x_i_pre[i] ) )
             age_th_x_i.append(age)
         age_th_x = sum(age_th_x_i) / len(age_th_x_i)
         age_u_x_i = []
+        d = 0
         for i in range(len(z)):
-            d = 0
             if z[i] in no_z:
-                d = no_z.index(z[i])
+                d = no_z.index(z[i]) + 1
                 continue
             j = i - d
             age = 14.84 * ( math.log10( u_x_i_ini[j] ) - math.log10( u_x_i_pre[i] ) )
@@ -355,6 +366,7 @@ def output_age_by_ye(ye:float,quality_model:str,stellar:str,s_ref:int):
         with open(path_age_by_ye,'a',encoding='utf-8',newline='\n') as f:
             f.writelines(f'{s_final}  {age_th_x}  {age_u_x}  {age_th_u}\n')
 
+    # 计算交点
     with open(path_age_by_ye,'r',encoding='utf-8',newline='\n') as f:
         change = 0
         for line in f:
@@ -376,7 +388,7 @@ def output_age_by_ye(ye:float,quality_model:str,stellar:str,s_ref:int):
             best_s_final = (s_final_b - s_final_a) * (th_u_a - u_x_a) / (th_u_a - u_x_a + u_x_b - th_u_b) + s_final_a
             best_age = (th_u_b - th_u_a) * (th_u_a - u_x_a) / (th_u_a - u_x_a + u_x_b - th_u_b) + th_u_a
 
-
+    # 将交点写入 age 文件
     path_age = os.path.join(path_age_by_ye_dir,f'ages')
     if change == 1:
         with open(path_age,'a+',encoding='utf-8',newline='\n') as f:
@@ -420,7 +432,7 @@ def stellar_abundance_from_log_to_float(stellar:str):
     with open(path_log,'r',encoding='utf-8',newline='\n') as f:
         for line in f:
             line = line.strip()
-            if line == '' or line[0] == 'z':
+            if line == '' or line[0] == 'z' or line[0] == '#':
                 continue
             parts = line.split()
             z = int(parts[0])
@@ -436,6 +448,7 @@ def stellar_abundance_from_log_to_float(stellar:str):
 误差分析
 '''
 def analysis_age_error(stellar:str):
+    # 计算由质量模型引起的误差
     path_dir = f'./data/stellar/{stellar}'
     quality_models = os.listdir(path_dir)
     ages = []
@@ -464,7 +477,7 @@ def analysis_age_error(stellar:str):
     with open(path_observe,'r',encoding='utf-8',newline='\n') as f:
         for line in f:
             line = line.strip()
-            if line == '' or line[0] == 'z':
+            if line == '' or line[0] == 'z' or line[0] == '#':
                 continue
             parts = line.split()
             if int(parts[0]) == 90:
