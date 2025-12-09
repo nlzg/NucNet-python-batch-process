@@ -7,11 +7,11 @@ import os
 计算 yz_sum 通过给定的 s_final,将极小的计算结果置零
 建议 s_final = 50000
 '''
-def putout_yz_sum(s_final:int,quality_model:str,ye:float,s_ref:int):
+def putout_yz_sum(s_final:int,quality_model:str,ye:float,s_ref:int, r_process_data_dir:str):
     s = 5
     yz_sum = []
     while s <= s_final:
-        path_dir_yz = f'./data/abundance_thuxreply/{quality_model}/Ye_{ye}'
+        path_dir_yz = f'./data/{r_process_data_dir}/{quality_model}/Ye_{ye}'
         path_yz = os.path.join(path_dir_yz,f'yz_s{s}')
         with open(path_yz,'r',encoding='utf-8',newline='\n') as f:
             for line in f:
@@ -255,7 +255,7 @@ def align_marge_for_z(z:int,align_y:float,path_marge:str):
 006
 当 ye 一定时，计算一系列 s_final 所得出的星体年龄，并输出时钟同步时的 s_final 和年龄
 '''
-def output_age_by_ye(ye:float,quality_model:str,stellar:str,s_ref:int):
+def output_age_by_ye(ye:float, quality_model:str, stellar:str, s_ref:int, r_process_data_dir:str):
     # 读取观测的核素及其丰度比
     z = []
     y_x_pre = []
@@ -337,7 +337,7 @@ def output_age_by_ye(ye:float,quality_model:str,stellar:str,s_ref:int):
                 if z[i] not in z_ini:
                     no_z.append(z[i])
         # 计算 r 过程模拟的丰度比
-        y_u_ini = get_u238_y_sum(quality_model=quality_model,ye=ye,s_final=s_final,s_ref=s_ref)
+        y_u_ini = get_u238_y_sum(quality_model=quality_model,ye=ye,s_final=s_final,s_ref=s_ref,r_process_data_dir=r_process_data_dir)
         if y_u_ini == 0:
             continue
         th_x_i_ini = [y_th_ini / x for x in y_x_ini]
@@ -407,8 +407,8 @@ def output_age_by_ye(ye:float,quality_model:str,stellar:str,s_ref:int):
 007
 计算 u238 在 s_final 下的 y_sum 
 '''
-def get_u238_y_sum(quality_model:str, ye:float, s_final:int, s_ref:int):
-    path_u238_dir = f'./data/abundance_thuxreply/{quality_model}/Ye_{ye}'
+def get_u238_y_sum(quality_model:str, ye:float, s_final:int, s_ref:int, r_process_data_dir:str):
+    path_u238_dir = f'./data/{r_process_data_dir}/{quality_model}/Ye_{ye}'
     y_sum = 0.0
     for s in range(5,s_final+1,5):
         path_u238 = os.path.join(path_u238_dir,f'yza_S{s}')
@@ -474,7 +474,7 @@ def analysis_age_error(stellar:str):
     middle_age = (max_age + min_age) / 2
     error_quality_models = (max_age - min_age) / 2
     range_quality_models = (min_age, max_age)
-
+    # 计算由观测丰度引起的误差
     path_observe_dir = f'./data/stellar/{stellar}'
     path_observe = os.path.join(path_observe_dir,'abundance_log')
     error_x_i = []
@@ -497,10 +497,10 @@ def analysis_age_error(stellar:str):
     error_th_u = 21.80 * (error_th ** 2 + error_u ** 2) ** 0.5
     error_th_u_x = (error_th_u ** 2 + error_th_x ** 2 + error_u_x ** 2) ** 0.5 / 3
     range_th_u_x = (middle_age - error_th_u_x, middle_age + error_th_u_x)
-
+    # 计算总误差
     error_all = error_quality_models + error_th_u_x
     range_all = (middle_age - error_all, middle_age + error_all)
-
+    # 输出结果
     path_analysis = os.path.join(path_dir,'analysis')
     with open(path_analysis, 'w',encoding='utf-8',newline='\n') as f:
         comtents = [f'middle_age\t{middle_age}\n',
@@ -516,18 +516,18 @@ def analysis_age_error(stellar:str):
 '''
 集合了上述函数：通过 r 过程模拟结果，预测星体的年龄
 '''
-def output_stellar_age(stellar:str):
+def output_stellar_age(stellar:str, r_process_data_dir:str):
     stellar_abundance_from_log_to_float(stellar)
     s_ref = 1
 
-    quality_models = os.listdir(f'./data/abundance_thuxreply')
+    quality_models = os.listdir(f'./data/{r_process_data_dir}')
     for i in range(len(quality_models)):
         if quality_models[i] == 'output':
             del quality_models[i]
             break
 
     for quality_model in quality_models:
-        path_ye_dir = f'./data/abundance_thuxreply/{quality_model}'
+        path_ye_dir = f'./data/{r_process_data_dir}/{quality_model}'
         yes = os.listdir(path_ye_dir)
         for i in range(len(yes)):
             yes[i] = yes[i][3:]
@@ -538,9 +538,9 @@ def output_stellar_age(stellar:str):
             f.write('')
         for ye in yes:
             for s_final in range(5, 401, 5):
-                putout_yz_sum(s_final=s_final, quality_model=quality_model, ye=float(ye), s_ref=s_ref)
+                putout_yz_sum(s_final=s_final, quality_model=quality_model, ye=float(ye), s_ref=s_ref, r_process_data_dir=r_process_data_dir)
             marge_y_sum_about_ye(quality_model=quality_model, ye=float(ye))
-            output_age_by_ye(quality_model=quality_model, ye=float(ye), stellar=stellar, s_ref=s_ref)
+            output_age_by_ye(quality_model=quality_model, ye=float(ye), stellar=stellar, s_ref=s_ref, r_process_data_dir=r_process_data_dir)
 
     analysis_age_error(stellar)
 
