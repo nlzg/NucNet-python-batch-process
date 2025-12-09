@@ -338,6 +338,8 @@ def output_age_by_ye(ye:float,quality_model:str,stellar:str,s_ref:int):
                     no_z.append(z[i])
         # 计算 r 过程模拟的丰度比
         y_u_ini = get_u238_y_sum(quality_model=quality_model,ye=ye,s_final=s_final,s_ref=s_ref)
+        if y_u_ini == 0:
+            continue
         th_x_i_ini = [y_th_ini / x for x in y_x_ini]
         u_x_i_ini = [y_u_ini / x for x in y_x_ini]
         th_u_ini = y_th_ini / y_u_ini
@@ -418,6 +420,8 @@ def get_u238_y_sum(quality_model:str, ye:float, s_final:int, s_ref:int):
                 parts = line.split()
                 if int(parts[0]) == 92 and int(parts[1]) == 238:
                     y_sum += float(parts[2]) * s_ref / s
+    if y_sum <= s_ref/1e8:
+        y_sum = 0
     return y_sum
 
 
@@ -514,7 +518,7 @@ def analysis_age_error(stellar:str):
 '''
 def output_stellar_age(stellar:str):
     stellar_abundance_from_log_to_float(stellar)
-    s_ref = 50000
+    s_ref = 1
 
     quality_models = os.listdir(f'./data/abundance_thuxreply')
     for i in range(len(quality_models)):
