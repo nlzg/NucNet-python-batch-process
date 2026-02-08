@@ -33,11 +33,11 @@ element = [
 001
 选取需要修改反应率的 β 衰变方程
 '''
-def get_new_beta(quality_model:str):
+def choose_beta_reaction(quality_model:str):
     path_dir = os.path.join(r'.\data\quality_model', f'{quality_model}')
     path_all = os.path.join(path_dir,'mass_excess_all')
-    path_beta = os.path.join(path_dir,'net_beta.txt')
-    path_new_beta = os.path.join(path_dir,'new_beta.txt')
+    path_beta = os.path.join(path_dir,'beta_reaction_jina.txt')
+    path_new_beta = os.path.join(path_dir,'beta_reaction_jina_update.txt')
     list1 = []
     with open(path_all,'r') as f:
         lines = f.readlines()
@@ -48,7 +48,8 @@ def get_new_beta(quality_model:str):
             parts = line.split()
             if int(parts[0]) > 118:
                 continue
-            list1.append(element[int(parts[0]) - 1] + parts[1])
+            a = int(parts[0]) + int(parts[1])
+            list1.append(element[int(parts[0]) - 1] + str(a))
 
     list2 = []
     for item in list1:
@@ -67,7 +68,7 @@ def get_new_beta(quality_model:str):
 
 '''
 002
-通过一个核素，输出衰变后产生的核素
+通过一个核素，输出 Z A 衰变后产生的核素
 如 o19 -> f19
 '''
 def next_element(the_element:str):
@@ -79,12 +80,12 @@ def next_element(the_element:str):
         else:
             name += item
     next_index = element.index(name) + 1
-    if next_index == len(element):
-        return 0
+    if next_index >= len(element):
+        return [0, 0, 0]
     else:
         next_name = element[next_index]
         next_ele = next_name + a
-        return next_ele
+        return [element.index(name) + 1, a, next_ele]
 
 '''
 003
@@ -108,6 +109,84 @@ def get_beta_rate(quality_model:str):
     with open(path_rate,'w') as f:
         f.writelines(list1)
 
-get_beta_rate('ws4')
+'''
+004
+结合 ws4_beta 和 new_beta 生成修改反应率的文本（update_beta.txt）
+'''
+def update_beta_reaction_by_txt(quality_model:str):
+    path_dir = os.path.join(r'.\data\quality_model', f'{quality_model}')
+    path_rate = os.path.join(path_dir,'ws4_beta_rate.txt')
+    path_new_beta = os.path.join(path_dir,'beta_reaction_jina_update.txt')
+    path_update_beta = os.path.join(path_dir,'update_beta.txt')
+    with open(path_rate,'r') as f:
+        lines = f.readlines()
+        rates = []
+        for line in lines:
+            line = line.strip()
+            if line == '':
+                continue
+            rates.append(line)
+    with open(path_new_beta,'r') as f:
+        lines = f.readlines()
+        reactions = []
+        for line in lines:
+            line = line.strip()
+            if line == '':
+                continue
+            parts = line.split()
+            reactions.append(parts[0])
+
+    update_txt = []
+    count = 0
+    for reaction in reactions:
+        for rate in rates:
+            parts = rate.split()
+            tag = 0
+            z1 = int(next_element(reaction)[0])
+            z2 = int(parts[0])
+            a1 = int(next_element(reaction)[1])
+            a2 = int(parts[1]) + int(parts[0])
+            if z2 > z1:
+                break
+            elif z1 > z2:
+                continue
+            elif a1 == a2:
+                tag = 1
+                count += 1
+                the_rate = parts[2]
+                break
+        if tag == 0 :
+            continue
+        the_txt = (f'single_rate\n'
+                   f'single rate example\n'
+                   f'1\n'
+                   f'{reaction}\n'
+                   f'3\n'
+                   f'{next_element(reaction)[2]}\n'
+                   f'electron\n'
+                   f'anti-neutrino_e\n'
+                   f'{the_rate}\n\n')
+        update_txt.append(the_txt)
+    with open(path_update_beta,'w') as f:
+        f.writelines(update_txt)
+    print(f'找到了 {count} 个 β 衰变反应')
+
+'''
+005
+筛选某个元素的 β 衰变反应
+'''
+def search_reaction(quality_model:str,element_index:int):
+    path_dir = os.path.join(r'.\data\quality_model', f'{quality_model}')
+    path_beta = os.path.join(path_dir,'beta_reaction_jina.txt')
+    with open(path_beta,'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            line = line.strip()
+            if line == '':
+                continue
+            parts = line.split()
+            if int(next_element(parts[0])[0]) == element_index:
+                print(f'{line}')
+
 
     

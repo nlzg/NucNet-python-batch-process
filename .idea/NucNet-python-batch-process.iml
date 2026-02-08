@@ -1,7 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="PYTHON_MODULE" version="4">
   <component name="NewModuleRootManager">
-    <content url="file://$MODULE_DIR$" />
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/data/y_sum/dz28" />
+      <excludeFolder url="file://$MODULE_DIR$/data/y_sum/frdm2012" />
+      <excludeFolder url="file://$MODULE_DIR$/data/y_sum/hfb24" />
+      <excludeFolder url="file://$MODULE_DIR$/data/y_sum/ws4/Ye_0.4" />
+      <excludeFolder url="file://$MODULE_DIR$/data/y_sum/ws4/Ye_0.405" />
+      <excludeFolder url="file://$MODULE_DIR$/data/y_sum/ws4/Ye_0.41" />
+      <excludeFolder url="file://$MODULE_DIR$/data/y_sum/ws4/Ye_0.415" />
+      <excludeFolder url="file://$MODULE_DIR$/data/y_sum/ws4/Ye_0.42" />
+      <excludeFolder url="file://$MODULE_DIR$/data/y_sum/ws4/Ye_0.425" />
+      <excludeFolder url="file://$MODULE_DIR$/data/y_sum/ws4/Ye_0.43" />
+      <excludeFolder url="file://$MODULE_DIR$/data/y_sum/ws4/Ye_0.435" />
+      <excludeFolder url="file://$MODULE_DIR$/data/y_sum/ws4/Ye_0.44" />
+      <excludeFolder url="file://$MODULE_DIR$/data/y_sum/ws4/Ye_0.445" />
+      <excludeFolder url="file://$MODULE_DIR$/data/y_sum/ws4/Ye_0.455" />
+      <excludeFolder url="file://$MODULE_DIR$/data/y_sum/ws4/Ye_0.46" />
+      <excludeFolder url="file://$MODULE_DIR$/data/y_sum/ws4/Ye_0.465" />
+      <excludeFolder url="file://$MODULE_DIR$/data/y_sum/ws4/Ye_0.47" />
+      <excludeFolder url="file://$MODULE_DIR$/data/y_sum/ws4/Ye_0.475" />
+      <excludeFolder url="file://$MODULE_DIR$/data/y_sum/ws4/Ye_0.48" />
+    </content>
     <orderEntry type="jdk" jdkName="Python 3.13" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>

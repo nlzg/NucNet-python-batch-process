@@ -1,5 +1,3 @@
-from batch_functions import putout_yz_sum, marge_y_sum_with_ye
+from age_functions import output_stellar_age, analysis_age_error
 
-for s_final in range(5,401,5):
-    putout_yz_sum(s_final,quality_model='ws4',ye=0.45,s_ref=300)
-marge_y_sum_with_ye(quality_model='ws4',ye=0.45)
+output_stellar_age('J2038−0023','abundance_thuxreply')
