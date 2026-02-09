@@ -37,7 +37,7 @@ def choose_beta_reaction(quality_model:str):
     path_dir = os.path.join(r'.\data\quality_model', f'{quality_model}')
     path_all = os.path.join(path_dir,'mass_excess_all')
     path_beta = os.path.join(path_dir,'beta_reaction_jina.txt')
-    path_new_beta = os.path.join(path_dir,'beta_reaction_jina_update.txt')
+    path_new_beta = os.path.join(path_dir,'beta_reaction_jina_choice.txt')
     list1 = []
     with open(path_all,'r') as f:
         lines = f.readlines()
@@ -111,13 +111,13 @@ def get_beta_rate(quality_model:str):
 
 '''
 004
-结合 ws4_beta 和 new_beta 生成修改反应率的文本（update_beta.txt）
+结合 ws4_beta 和 new_beta 生成修改反应率的文本（update_beta_by_python.txt）
 '''
 def update_beta_reaction_by_txt(quality_model:str):
     path_dir = os.path.join(r'.\data\quality_model', f'{quality_model}')
     path_rate = os.path.join(path_dir,'ws4_beta_rate.txt')
-    path_new_beta = os.path.join(path_dir,'beta_reaction_jina_update.txt')
-    path_update_beta = os.path.join(path_dir,'update_beta.txt')
+    path_new_beta = os.path.join(path_dir,'beta_reaction_jina_choice.txt')
+    path_update_beta = os.path.join(path_dir,'update_beta_by_python.txt')
     with open(path_rate,'r') as f:
         lines = f.readlines()
         rates = []
@@ -158,7 +158,7 @@ def update_beta_reaction_by_txt(quality_model:str):
         if tag == 0 :
             continue
         the_txt = (f'single_rate\n'
-                   f'single rate example\n'
+                   f'my_ws4\n'
                    f'1\n'
                    f'{reaction}\n'
                    f'3\n'
@@ -188,5 +188,10 @@ def search_reaction(quality_model:str,element_index:int):
             if int(next_element(parts[0])[0]) == element_index:
                 print(f'{line}')
 
-
+'''
+函数汇总
+'''
+choose_beta_reaction('ws4')
+get_beta_rate('ws4')
+update_beta_reaction_by_txt('ws4')
     
