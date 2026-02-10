@@ -189,9 +189,61 @@ def search_reaction(quality_model:str,element_index:int):
                 print(f'{line}')
 
 '''
-函数汇总
+修改 β 反应率的函数汇总
+需要的文件：mass_excess_all   beta_reaction_jina.txt  ws4_T.txt
+输出的文件：update_beta_by_python.txt
 '''
-choose_beta_reaction('ws4')
-get_beta_rate('ws4')
-update_beta_reaction_by_txt('ws4')
+def updata_beta(quality_model:str):
+    choose_beta_reaction(quality_model)
+    get_beta_rate(quality_model)
+    update_beta_reaction_by_txt(quality_model)
+
+def update_mass_excess(quality_model:str):
+    path_dir = os.path.join(r'.\data\quality_model', f'{quality_model}')
+    path_all = os.path.join(path_dir,'mass_excess_all')
+    path_jina = os.path.join(path_dir,'nuclides_jina.txt')
+    path_update = os.path.join(path_dir,'update_mass_excess.txt')
+    with open(path_all,'r') as f:
+        lines = f.readlines()
+        list_all = []
+        for line in lines:
+            line = line.strip()
+            if line == '':
+                continue
+            parts = line.split()
+            list_all.append([int(parts[0]), int(parts[0])+int(parts[1]), (parts[2])])
+    with open(path_jina,'r') as f:
+        lines = f.readlines()
+        list_jina = []
+        for line in lines:
+            line = line.strip()
+            if line == '':
+                continue
+            parts = line.split()
+            list_jina.append([int(parts[1]), int(parts[2])])
+
+    list_update = []
+    count = 0
+    for nuc_jina in list_jina:
+        tag = 0
+        for nuc_all in list_all:
+            if nuc_all[0] > nuc_jina[0]:
+                break
+            elif nuc_all[0] > nuc_jina[0]:
+                continue
+            elif nuc_all[1] == nuc_jina[1]:
+                tag = 1
+                count += 1
+                z = nuc_jina[0]
+                a = nuc_jina[1]
+                mass_excess = float(nuc_all[2])/1000
+        if tag == 0 :
+            continue
+        list_update.append(f'{z}  {a}  {mass_excess}\n')
+
+    with open(path_update,'w') as f:
+        f.writelines(list_update)
+    print(f'匹配了 {count} 个核素')
+
+update_mass_excess('ws4')
     
