@@ -29,6 +29,12 @@ element = [
     "rg", "cn", "nh", "fl", "mc", "lv", "ts", "og"
 ]
 
+
+#########################################################################################
+# 第一部分 修改 β 反应率
+#########################################################################################
+
+
 '''
 001
 选取需要修改反应率的 β 衰变方程
@@ -89,7 +95,7 @@ def next_element(the_element:str):
 
 '''
 003
-通过 ws4_T 生成 β 反应率文件（ws4_beta）
+通过 ws4_T 生成 β 反应率文件（ws4_beta_rate.txt）
 '''
 def get_beta_rate(quality_model:str):
     path_dir = os.path.join(r'.\data\quality_model', f'{quality_model}')
@@ -189,6 +195,7 @@ def search_reaction(quality_model:str,element_index:int):
                 print(f'{line}')
 
 '''
+006
 修改 β 反应率的函数汇总
 需要的文件：mass_excess_all   beta_reaction_jina.txt  ws4_T.txt
 输出的文件：update_beta_by_python.txt
@@ -198,6 +205,15 @@ def updata_beta(quality_model:str):
     get_beta_rate(quality_model)
     update_beta_reaction_by_txt(quality_model)
 
+
+#######################################################################################
+# 第二部分 修改质量剩余
+#######################################################################################
+
+'''
+007
+生成修改质量剩余的文件（update_mass_excess.txt）
+'''
 def update_mass_excess(quality_model:str):
     path_dir = os.path.join(r'.\data\quality_model', f'{quality_model}')
     path_all = os.path.join(path_dir,'mass_excess_all')
@@ -245,5 +261,74 @@ def update_mass_excess(quality_model:str):
         f.writelines(list_update)
     print(f'匹配了 {count} 个核素')
 
-update_mass_excess('ws4')
+
+################################################################################
+# 第三部分 修改 (n,γ) 反应率
+################################################################################
+
+
+'''
+002
+通过一个核素，输出 Z A 衰变后产生的核素
+如 o19 -> f19
+'''
+def after_element(the_element:str):
+    name = ''
+    a = ''
+    for item in the_element:
+        if item.isdigit():
+            a += item
+        else:
+            name += item
+    after_ele = name + str( int(a) + 1 )
+    return [element.index(name) + 1, int(a), after_ele]
+
+
+'''
+008
+统计 nucnet 中被 ws4 模型覆盖的 (n,γ) 反应，并排序，生成 gamma_reaction_jina_choice.txt
+'''
+def choose_gamma_reaction(quality_model:str):
+    path_dir = os.path.join(r'.\data\quality_model', f'{quality_model}')
+    path_gamma = os.path.join(path_dir,'gamma_reaction_jina.txt')
+    path_all = os.path.join(path_dir,'mass_excess_all')
+    path_choice = os.path.join(path_dir,'gamma_reaction_jina_choice.txt')
+    list_all = []
+    with open(path_all,'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            line = line.strip()
+            if line == '':
+                continue
+            parts = line.split()
+            list_all.append([int(parts[0]), int(parts[0])+int(parts[1])])
+
+    list_gamma = []
+    with open(path_gamma,'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            line = line.strip()
+            if line == '':
+                continue
+            list_gamma.append(line)
+
+    reactions = []
+    for nuc_all in list_all:
+        for reaction in list_gamma:
+            reaction = reaction.strip()
+            parts = reaction.split()
+            nuc_gamma_1 = after_element(parts[2])
+            nuc_gamma_2 = after_element(parts[4])
+            if nuc_all[0] == nuc_gamma_1[0] and nuc_all[1] == nuc_gamma_1[1] and nuc_all[1]+1 == nuc_gamma_2[1]:
+                reactions.append(reaction + '\n')
+
+    with open(path_choice,'w') as f:
+        f.writelines(reactions)
+
+
+
+
+
+
+
     
