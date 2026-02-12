@@ -1,5 +1,6 @@
 import math
 import os
+import subprocess
 
 # 小写化学元素符号列表：索引=原子序数-1，1-118号完整（核反应/编程适配）
 element = [
@@ -329,6 +330,7 @@ def choose_gamma_reaction(quality_model:str):
 '''
 009
 为一个 (n,γ) 反应方程生成 talys.inp 文件
+输出计算命令，并收集运算结果到 update_gamma_by_python.txt
 '''
 def make_inp(quality_model:str,reaction:str):
     path_dir = os.path.join(r'.\data\quality_model', f'{quality_model}')
@@ -338,6 +340,8 @@ def make_inp(quality_model:str,reaction:str):
     parts = reaction.split()
     nuc_gamma_1 = after_element(parts[2])
     nuc_gamma_2 = after_element(parts[4])
+    nuc_gamma1_name = parts[2]
+    nuc_gamma2_name = parts[4]
     with open(path_all,'r') as f:
         lines = f.readlines()
         for line in lines:
@@ -362,6 +366,35 @@ def make_inp(quality_model:str,reaction:str):
                f'massexcess {nuc_gamma_2[0]} {nuc_gamma_2[1]} {excess_2}\n')
     with open(path_inp,'w') as f:
         f.writelines(comment)
+
+    subprocess.run("talys < talys.inp > talys.out", shell=True)
+
+    comment_1 = (f'rate_table\n'
+               f'my_ws4\n'
+               f'2\n'
+               f'{nuc_gamma1_name}\n'
+               f'n\n'
+               f'2\n'
+               f'{nuc_gamma2_name}\n'
+               f'gamma\n')
+    comment_2 = ''
+    path_out = os.path.join(path_dir, 'astrorate.g')
+    path_update = os.path.join(path_dir, 'update_gamma_by_python.txt')
+    with open(path_out,'r') as f:
+        lines = f.readlines()
+        count = 0
+        for line in lines:
+            line = line.strip()
+            if line == '' or line[0] == '#':
+                continue
+            count += 1
+            parts = line.split()
+            comment_2 += f'{parts[0]}   {parts[1]}\n'
+    comment_update = comment_1 + f'{count}\n' + comment_2 + '\n'
+
+    with open(path_update,'a') as f:
+        f.writelines(comment_update)
+
 
 
 
