@@ -7505,5 +7505,4 @@ n + ru125 -> ru126 + gamma  (Data source: rath)
 n + rn236 -> rn237 + gamma  (Data source: pkrF)
 n + md281 -> md282 + gamma  (Data source: pkrF)
 
-Number of reactions = 7506
 
