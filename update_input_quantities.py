@@ -326,7 +326,42 @@ def choose_gamma_reaction(quality_model:str):
         f.writelines(reactions)
 
 
-
+'''
+009
+为一个 (n,γ) 反应方程生成 talys.inp 文件
+'''
+def make_inp(quality_model:str,reaction:str):
+    path_dir = os.path.join(r'.\data\quality_model', f'{quality_model}')
+    path_all = os.path.join(path_dir,'mass_excess_all')
+    path_inp = os.path.join(path_dir,'talys.inp')
+    reaction = reaction.strip()
+    parts = reaction.split()
+    nuc_gamma_1 = after_element(parts[2])
+    nuc_gamma_2 = after_element(parts[4])
+    with open(path_all,'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            line = line.strip()
+            if line == '':
+                continue
+            parts = line.split()
+            nuc_all = [int(parts[0]), int(parts[0])+int(parts[1]), (parts[2])]
+            if nuc_all[0] > nuc_gamma_1[0]:
+                break
+            elif nuc_all[0] == nuc_gamma_1[0]:
+                if nuc_all[1] == nuc_gamma_1[1]:
+                    excess_1 = float(nuc_all[2])/1000
+                elif nuc_all[1] == nuc_gamma_2[1]:
+                    excess_2 = float(nuc_all[2])/1000
+    comment = (f'projectile n\n'
+               f'element {element[nuc_gamma_1[0]-1]}\n'
+               f'mass {nuc_gamma_1[1]}\n'
+               f'energy 1.\n'
+               f'astro y\n'
+               f'massexcess {nuc_gamma_1[0]} {nuc_gamma_1[1]} {excess_1}\n'
+               f'massexcess {nuc_gamma_2[0]} {nuc_gamma_2[1]} {excess_2}\n')
+    with open(path_inp,'w') as f:
+        f.writelines(comment)
 
 
 
