@@ -331,11 +331,12 @@ def choose_gamma_reaction(quality_model:str):
 009
 为一个 (n,γ) 反应方程生成 talys.inp 文件
 输出计算命令，并收集运算结果到 update_gamma_by_python.txt
+这个程序只能在 Linux 里面运行
 '''
 def make_inp(quality_model:str,reaction:str):
-    path_dir = os.path.join(r'.\data\quality_model', f'{quality_model}')
-    path_all = os.path.join(path_dir,'mass_excess_all')
-    path_inp = os.path.join(path_dir,'talys.inp')
+    path_dir = os.path.join('.', 'data', 'quality_model', f'{quality_model}')
+    path_all = os.path.join(path_dir, 'mass_excess_all')
+    path_inp = os.path.join('.', 'talys.inp')
     reaction = reaction.strip()
     parts = reaction.split()
     nuc_gamma_1 = after_element(parts[2])
@@ -378,8 +379,8 @@ def make_inp(quality_model:str,reaction:str):
                f'{nuc_gamma2_name}\n'
                f'gamma\n')
     comment_2 = ''
-    path_out = os.path.join(path_dir, 'astrorate.g')
-    path_update = os.path.join(path_dir, 'update_gamma_by_python.txt')
+    path_out = os.path.join('.', 'astrorate.g')
+    path_update = os.path.join('.', 'update_gamma_by_python.txt')
     with open(path_out,'r') as f:
         lines = f.readlines()
         count = 0
