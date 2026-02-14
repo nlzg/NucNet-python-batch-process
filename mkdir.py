@@ -20,13 +20,13 @@ with open(all_reaction, 'r') as f:
         count += 1
 leng = int(count / n) + 1
 
-a = 0
 for i in range(n):
     path_source = os.path.join(original_dir, 'run_gamma')
     path_target = os.path.join(path_make_all, f'run_{i+1}')
     shutil.copytree(path_source, path_target)
     wri = []
     with open(all_reaction, 'r') as f:
+        a = 0
         lines = f.readlines()
         for line in lines:
             if line == '':
