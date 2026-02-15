@@ -6,6 +6,7 @@ print('\n')
 original_dir = os.getcwd()
 path_available_dir = os.path.join(original_dir, f'available')
 path_reaction_all = os.path.join(original_dir, 'gamma_reaction_jina_choice.txt')
+n = len(os.listdir(path_available_dir))
 with open(path_reaction_all, 'r') as f:
     lines = f.readlines()
     cp = 0
@@ -28,6 +29,9 @@ with open(path_reaction_all, 'r') as f:
         os.remove(os.path.join(path_available_dir, files[0]))
         print(f'{run_name} 开始计算第 {cp} 个反应')
 
+files = os.listdir(path_available_dir)
+while len(files) < n:
+    files = os.listdir(path_available_dir)
+print('计算完毕')
 
-
-
+subprocess.Popen("python3 end.py", shell=True)
