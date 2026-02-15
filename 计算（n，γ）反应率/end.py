@@ -12,8 +12,8 @@ for i in range(n):
         lines = f.readlines()
         for line in lines:
             update.append(line)
-    path_update = os.path.join(original_dir, 'update_gamma_by_python.txt')
-    with open(path_update, 'w') as f:
-        f.writelines(update)
+path_update = os.path.join(original_dir, 'update_gamma_by_python.txt')
+with open(path_update, 'w') as f:
+    f.writelines(update)
 
 print('数据整理完毕')
