@@ -40,8 +40,8 @@ element = [
 001
 选取需要修改反应率的 β 衰变方程
 '''
-def choose_beta_reaction(quality_model:str):
-    path_dir = os.path.join(r'.\data\quality_model', f'{quality_model}')
+def choose_beta_reaction():
+    path_dir = os.getcwd()
     path_all = os.path.join(path_dir,'mass_excess_all')
     path_beta = os.path.join(path_dir,'beta_reaction_jina.txt')
     path_new_beta = os.path.join(path_dir,'beta_reaction_jina_choice.txt')
@@ -98,8 +98,8 @@ def next_element(the_element:str):
 003
 通过 ws4_T 生成 β 反应率文件（ws4_beta_rate.txt）
 '''
-def get_beta_rate(quality_model:str):
-    path_dir = os.path.join(r'.\data\quality_model', f'{quality_model}')
+def get_beta_rate():
+    path_dir = os.getcwd()
     path_t = os.path.join(path_dir,'ws4_T.txt')
     path_rate = os.path.join(path_dir,'ws4_beta_rate.txt')
     with open(path_t,'r') as f:
@@ -120,8 +120,8 @@ def get_beta_rate(quality_model:str):
 004
 结合 ws4_beta 和 new_beta 生成修改反应率的文本（update_beta_by_python.txt）
 '''
-def update_beta_reaction_by_txt(quality_model:str):
-    path_dir = os.path.join(r'.\data\quality_model', f'{quality_model}')
+def update_beta_reaction_by_txt():
+    path_dir = os.getcwd()
     path_rate = os.path.join(path_dir,'ws4_beta_rate.txt')
     path_new_beta = os.path.join(path_dir,'beta_reaction_jina_choice.txt')
     path_update_beta = os.path.join(path_dir,'update_beta_by_python.txt')
@@ -176,14 +176,14 @@ def update_beta_reaction_by_txt(quality_model:str):
         update_txt.append(the_txt)
     with open(path_update_beta,'w') as f:
         f.writelines(update_txt)
-    print(f'找到了 {count} 个 β 衰变反应')
+    print(f'找到了 {count} 个 β 衰变反应，并生成了 update_beta_by_python.txt')
 
 '''
 005
 筛选某个元素的 β 衰变反应
 '''
-def search_reaction(quality_model:str,element_index:int):
-    path_dir = os.path.join(r'.\data\quality_model', f'{quality_model}')
+def search_reaction(element_index:int):
+    path_dir = os.getcwd()
     path_beta = os.path.join(path_dir,'beta_reaction_jina.txt')
     with open(path_beta,'r') as f:
         lines = f.readlines()
@@ -201,10 +201,13 @@ def search_reaction(quality_model:str,element_index:int):
 需要的文件：mass_excess_all   beta_reaction_jina.txt  ws4_T.txt
 输出的文件：update_beta_by_python.txt
 '''
-def updata_beta(quality_model:str):
-    choose_beta_reaction(quality_model)
-    get_beta_rate(quality_model)
-    update_beta_reaction_by_txt(quality_model)
+def update_beta():
+    choose_beta_reaction()
+    get_beta_rate()
+    update_beta_reaction_by_txt()
+    path_dir = os.getcwd()
+    os.remove(os.path.join(path_dir,'beta_reaction_jina_choice.txt'))
+    os.remove(os.path.join(path_dir,'ws4_beta_rate.txt'))
 
 
 #######################################################################################
@@ -216,7 +219,7 @@ def updata_beta(quality_model:str):
 生成修改质量剩余的文件（update_mass_excess.txt）
 '''
 def update_mass_excess(quality_model:str):
-    path_dir = os.path.join(r'.\data\quality_model', f'{quality_model}')
+    path_dir = os.getcwd()
     path_all = os.path.join(path_dir,'mass_excess_all')
     path_jina = os.path.join(path_dir,'nuclides_jina.txt')
     path_update = os.path.join(path_dir,'update_mass_excess.txt')
@@ -290,7 +293,7 @@ def after_element(the_element:str):
 统计 nucnet 中被 ws4 模型覆盖的 (n,γ) 反应，并排序，生成 gamma_reaction_jina_choice.txt
 '''
 def choose_gamma_reaction(quality_model:str):
-    path_dir = os.path.join(r'.\data\quality_model', f'{quality_model}')
+    path_dir = os.getcwd()
     path_gamma = os.path.join(path_dir,'gamma_reaction_jina.txt')
     path_all = os.path.join(path_dir,'mass_excess_all')
     path_choice = os.path.join(path_dir,'gamma_reaction_jina_choice.txt')
@@ -326,75 +329,9 @@ def choose_gamma_reaction(quality_model:str):
     with open(path_choice,'w') as f:
         f.writelines(reactions)
 
+    print(f'筛选了 {len(reactions)} 个（n，γ）反应代生成 update_gamma_by_python.txt 文件')
 
-'''
-009
-为一个 (n,γ) 反应方程生成 talys.inp 文件
-输出计算命令，并收集运算结果到 update_gamma_by_python.txt
-这个程序只能在 Linux 里面运行
-'''
-def make_inp(quality_model:str,reaction:str):
-    path_dir = os.path.join('.', 'data', 'quality_model', f'{quality_model}')
-    path_all = os.path.join(path_dir, 'mass_excess_all')
-    path_inp = os.path.join('.', 'talys.inp')
-    reaction = reaction.strip()
-    parts = reaction.split()
-    nuc_gamma_1 = after_element(parts[2])
-    nuc_gamma_2 = after_element(parts[4])
-    nuc_gamma1_name = parts[2]
-    nuc_gamma2_name = parts[4]
-    with open(path_all,'r') as f:
-        lines = f.readlines()
-        for line in lines:
-            line = line.strip()
-            if line == '':
-                continue
-            parts = line.split()
-            nuc_all = [int(parts[0]), int(parts[0])+int(parts[1]), (parts[2])]
-            if nuc_all[0] > nuc_gamma_1[0]:
-                break
-            elif nuc_all[0] == nuc_gamma_1[0]:
-                if nuc_all[1] == nuc_gamma_1[1]:
-                    excess_1 = float(nuc_all[2])/1000
-                elif nuc_all[1] == nuc_gamma_2[1]:
-                    excess_2 = float(nuc_all[2])/1000
-    comment = (f'projectile n\n'
-               f'element {element[nuc_gamma_1[0]-1]}\n'
-               f'mass {nuc_gamma_1[1]}\n'
-               f'energy 1.\n'
-               f'astro y\n'
-               f'massexcess {nuc_gamma_1[0]} {nuc_gamma_1[1]} {excess_1}\n'
-               f'massexcess {nuc_gamma_2[0]} {nuc_gamma_2[1]} {excess_2}\n')
-    with open(path_inp,'w') as f:
-        f.writelines(comment)
 
-    subprocess.run("talys < talys.inp > talys.out", shell=True)
-
-    comment_1 = (f'rate_table\n'
-               f'my_ws4\n'
-               f'2\n'
-               f'{nuc_gamma1_name}\n'
-               f'n\n'
-               f'2\n'
-               f'{nuc_gamma2_name}\n'
-               f'gamma\n')
-    comment_2 = ''
-    path_out = os.path.join('.', 'astrorate.g')
-    path_update = os.path.join('.', 'update_gamma_by_python.txt')
-    with open(path_out,'r') as f:
-        lines = f.readlines()
-        count = 0
-        for line in lines:
-            line = line.strip()
-            if line == '' or line[0] == '#':
-                continue
-            count += 1
-            parts = line.split()
-            comment_2 += f'{parts[0]}   {parts[1]}\n'
-    comment_update = comment_1 + f'{count}\n' + comment_2 + '\n'
-
-    with open(path_update,'a') as f:
-        f.writelines(comment_update)
 
 
 

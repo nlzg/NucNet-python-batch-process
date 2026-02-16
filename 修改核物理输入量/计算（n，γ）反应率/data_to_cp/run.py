@@ -78,8 +78,8 @@ def run(reaction:str):
     comment_1 = (f'rate_table\n'
                f'my_ws4\n'
                f'2\n'
-               f'{nuc_gamma1_name}\n'
                f'n\n'
+               f'{nuc_gamma1_name}\n'
                f'2\n'
                f'{nuc_gamma2_name}\n'
                f'gamma\n')
@@ -95,7 +95,7 @@ def run(reaction:str):
                 continue
             count += 1
             parts = line.split()
-            comment_2 += f'{parts[0]}   {parts[1]}\n'
+            comment_2 += f'{parts[0]}   {parts[1]}  1.00\n'
     comment_update = comment_1 + f'{count}\n' + comment_2 + '\n'
 
     with open(path_update,'a') as f:
