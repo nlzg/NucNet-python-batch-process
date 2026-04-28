@@ -7,16 +7,18 @@ import threading
 # Ye 列表
 Yes = [0.45]
 # S 列表
-Ss = [100, 200, 300]
-# 质量模型列表（nucnet， ws4）
-models = ['jina', 'ws4']
+Ss = range(150,351,5)
+# 质量模型列表（jina， ws4）
+models = ['AME+WS4']
 
 
-sem = threading.Semaphore(3)
+sem = threading.Semaphore(50)
 #定义一个单次计算函数
 def run(model, Ye, S):
 
     sem.acquire()
+
+    print(f'{model}\t{Ye}\t{S}\t开始计算')
 
     path_misc = os.path.join('/', 'home', 'xsli', 'projects', 'nucnet-tools-code', 'examples', 'misc')
     path_my_net = os.path.join('/', 'home', 'xsli', 'projects', 'nucnet-tools-code', 'data_pub', 'my_net.xml')
@@ -69,15 +71,14 @@ def run(model, Ye, S):
     subprocess.call(cmd2, shell=True)
 
     # 开始计算
-    path_model_dir = os.path.join('/', 'home', 'xsli', 'projects', 'nucnet-tools-code', 'my_data')
-    path_network = os.path.join(path_model_dir, f'{model}', f'network_{model}.xml')
+    path_model_dir = os.path.join('/', 'home', 'xsli', 'projects', 'nucnet-tools-code', 'switch-mass-model')
+    path_network = os.path.join(path_model_dir, f'{model}', f'net_{model}.xml')
     path_run = os.path.join('/', 'home', 'xsli', 'projects', 'nucnet-tools-code', 'my_examples', 'network')
     path_output = os.path.join(path_dir, 'output.xml')
     cmd3 = (f'cd {path_run} && '
             f'./run_single_zone {path_network} {path_zone} {path_output} "[z <= 90]" > /dev/null 2>&1')
     proc = subprocess.Popen(cmd3, shell=True)
     proc.wait()
-    print(f'{model}_{Ye}_{S}计算完成')
 
     sem.release()
 

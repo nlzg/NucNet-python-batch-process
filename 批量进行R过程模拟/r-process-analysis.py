@@ -9,7 +9,7 @@ Yes = [0.45]
 # S 列表
 Ss = range(150,351,5)
 # 质量模型列表（nucnet， ws4）
-models = ['old_ws4', 'ws4']
+models = ['AME+WS4']
 # 按什么输出
 analysis_types = ['a']
 
