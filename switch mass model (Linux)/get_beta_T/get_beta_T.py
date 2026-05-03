@@ -5,7 +5,7 @@ FILE_WS4 = "new_mass_excess.txt"
 # 输入：beta衰变原始数据文件
 FILE_BETA = "betaprimal.dat"
 # 输出：最终半衰期结果（只生成这一个文件）
-OUTFILE = "new_T_2.txt"
+OUTFILE = "new_T.txt"
 # ======================================================
 
 # 导入Python自带的数学库（用来计算 log、指数、圆周率等）
@@ -242,7 +242,4 @@ with open(OUTFILE, 'w') as f:
     # 把每一条结果写入文件
     for item in result:
         # 按固定格式输出：Z N 半衰期 后面4列参数
-        f.write(f"{item[0]:<4d}{item[1]:<4d}{item[2]:>20.7f}{item[3]:>20.7f}{item[4]:>20.7f}{item[5]:>20.7f}{item[6]:>20.7f}\n")
-
-# 控制台提示完成
-print("完成！生成：new_T_2.txt")
+        f.write(f"{item[0]:<4d}{item[1]:<4d}{item[2]:>20.7f}\n")

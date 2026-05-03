@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 
 #质量模型的名字
-model = 'AME+WS4'
+model = 'WS4'
 # 最大并发数
 MAX_THREADS = 50
 
@@ -44,7 +44,7 @@ path_new_mass_excess = os.path.join('.', f'{model}', f'mass_excess_{model}.txt')
 try:
     with open(path_new_mass_excess,'r') as f:
         pass
-    print('已找到新的质量剩余文件，请检查数据结构为【Z, N, MASS_EXCESS(KeV)】')
+    print('已找到新的质量剩余文件，请检查数据结构为【Z, N, WS4, AME】(单位：KeM）')
 except:
     print('未找到新的质量剩余文件')
 # 临时数据：
@@ -71,8 +71,13 @@ with open(path_new_mass_excess,'r') as f:
         line = line.strip()
         if line == '':
             continue
+        if line[0] == '#':
+            continue
         parts = line.split()
-        list_all.append([int(parts[0]), int(parts[0])+int(parts[1]), (parts[2])])
+        if len(parts) == 3:
+            list_all.append([int(parts[0]), int(parts[0]) + int(parts[1]), parts[2]])
+        else:
+            list_all.append([int(parts[0]), int(parts[0]) + int(parts[1]), parts[2], parts[3]])
 with open(path_old_mass_excess,'r') as f:
     lines = f.readlines()
     list_jina = []
@@ -94,7 +99,7 @@ for nuc_jina in list_jina:
             tag = 1
             z = nuc_jina[0]
             a = nuc_jina[1]
-            mass_excess = float(nuc_all[2])/1000
+            mass_excess = float(nuc_all[-1])/1000
     if tag == 0 :
         continue
     list_update.append(f'{z}  {a}  {mass_excess}\n')
@@ -159,6 +164,8 @@ with open(path_new_mass_excess,'r') as f:
     for line in lines:
         line = line.strip()
         if line == '':
+            continue
+        if line[0] == '#':
             continue
         parts = line.split()
         if int(parts[0]) > 118:
@@ -260,15 +267,6 @@ def after_element(the_element:str):
     return [element.index(name) + 1, int(a), after_ele]
 ## 筛选新旧模型共有的 (n,γ) 反应
 path_same_gamma_react = os.path.join(dir_temporary_data,'same_gamma_react.txt')
-list_all = []
-with open(path_new_mass_excess,'r') as f:
-    lines = f.readlines()
-    for line in lines:
-        line = line.strip()
-        if line == '':
-            continue
-        parts = line.split()
-        list_all.append([int(parts[0]), int(parts[0])+int(parts[1])])
 list_gamma = []
 with open(path_old_gamma_react,'r') as f:
     lines = f.readlines()
@@ -281,17 +279,37 @@ with open(path_old_gamma_react,'r') as f:
             continue
         list_gamma.append(line)
 reactions = []
-for nuc_all in list_all:
-    for reaction in list_gamma:
-        reaction = reaction.strip()
-        parts = reaction.split()
-        nuc_gamma_1 = after_element(parts[2])
-        nuc_gamma_2 = after_element(parts[4])
-        if nuc_all[0] == nuc_gamma_1[0] and nuc_all[1] == nuc_gamma_1[1] and nuc_all[1]+1 == nuc_gamma_2[1]:
+for reaction in list_gamma:
+    parts = reaction.split()
+    nuc_gamma_1 = after_element(parts[2])
+    nuc_gamma_2 = after_element(parts[4])
+    tag = 0
+    for nuc_all in list_all:
+        if tag == 0 and nuc_all[0] == nuc_gamma_1[0] and nuc_all[1] == nuc_gamma_1[1]:
+            tag = 1
+        if tag == 1 and nuc_all[0] == nuc_gamma_2[0] and nuc_all[1] == nuc_gamma_2[1]:
             reactions.append(reaction + '\n')
+reactions_arrange = []
+for react in reactions:
+    parts = react.split()
+    nuc_1 = after_element(parts[2])
+    tag = 0
+    for i in range(len(reactions_arrange)):
+        parts_arrange = reactions_arrange[i].split()
+        nuc_2 = after_element(parts_arrange[2])
+        if nuc_1[0] < nuc_2[0]:
+            reactions_arrange.insert(i,react)
+            tag = 1
+            break
+        elif nuc_1[0] == nuc_2[0] and nuc_1[1] < nuc_2[1]:
+            reactions_arrange.insert(i,react)
+            tag = 1
+            break
+    if tag == 0:
+        reactions_arrange.append(react)
 with open(path_same_gamma_react,'w') as f:
-    f.writelines(reactions)
-print(f'匹配了 {len(reactions)} 个 （n，γ）反应')
+    f.writelines(reactions_arrange)
+print(f'匹配了 {len(reactions_arrange)} 个 （n，γ）反应')
 
 # %% 第四部分：批量计算 (n,γ) 反应率，并生成用于修改 (n,γ) 反应率的文件
 print('开始批量计算 (n,γ) 反应率')
@@ -324,21 +342,20 @@ def run(cp:int,max_threads:int,model:str):
     nuc_2 = after_element(parts_in[4])
     nuc_1_name = parts_in[2]
     nuc_2_name = parts_in[4]
-    with open(path_new_mass_excess, 'r') as f:
-        lines_in = f.readlines()
-        for line_in in lines_in:
-            line_in = line_in.strip()
-            if line_in == '':
-                continue
-            parts_in = line_in.split()
-            nuc_all = [int(parts_in[0]), int(parts_in[0]) + int(parts_in[1]), parts_in[2]]
-            if nuc_all[0] > nuc_1[0]:
-                break
-            elif nuc_all[0] == nuc_1[0]:
-                if nuc_all[1] == nuc_1[1]:
-                    excess_1 = float(nuc_all[2]) / 1000
-                elif nuc_all[1] == nuc_2[1]:
-                    excess_2 = float(nuc_all[2]) / 1000
+    for nuc_all in list_all:
+        if nuc_all[0] > nuc_1[0]:
+            break
+        elif nuc_all[0] == nuc_1[0]:
+            if nuc_all[1] == nuc_1[1]:
+                nuc_1 = nuc_all
+            elif nuc_all[1] == nuc_2[1]:
+                nuc_2 = nuc_all
+    if len(nuc_1) == len(nuc_2):
+        excess_1 = float(nuc_1[-1]) / 1000
+        excess_2 = float(nuc_2[-1]) / 1000
+    else:
+        excess_1 = float(nuc_1[2]) / 1000
+        excess_2 = float(nuc_2[2]) / 1000
     comment = (f'projectile n\n'
                f'element {element[nuc_1[0] - 1]}\n'
                f'mass {nuc_1[1]}\n'
