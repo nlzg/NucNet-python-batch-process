@@ -2,6 +2,7 @@
 # 在 Linux 中运行，运行前执行 conda activate nucnet 命令
 import os
 import subprocess
+import sys
 import threading
 
 # Ye 列表
@@ -9,9 +10,9 @@ Yes = [0.45]
 # S 列表
 Ss = range(150,351,5)
 # 质量模型列表（nucnet， ws4）
-models = ['AME+WS4']
+models = sys.argv[2:] #例：['AME+WS4']
 # 按什么输出
-analysis_types = ['a']
+analysis_types = [sys.argv[1]] #例：‘a’
 
 # 单次分析函数
 sem = threading.Semaphore(50)

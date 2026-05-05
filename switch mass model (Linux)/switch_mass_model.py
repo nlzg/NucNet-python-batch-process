@@ -2,15 +2,15 @@ import math
 import os
 import shutil
 import subprocess
+import sys
 import threading
 
 from tqdm import tqdm
 
-
 #质量模型的名字
-model = 'WS4'
+model = sys.argv[1] #例：'WS4'
 # 最大并发数
-MAX_THREADS = 50
+MAX_THREADS = int(sys.argv[2]) #例：50
 
 # 元素符号列表：索引=原子序数-1
 element = [
@@ -44,7 +44,7 @@ path_new_mass_excess = os.path.join('.', f'{model}', f'mass_excess_{model}.txt')
 try:
     with open(path_new_mass_excess,'r') as f:
         pass
-    print('已找到新的质量剩余文件，请检查数据结构为【Z, N, WS4, AME】(单位：KeM）')
+    print(f'已找到新的质量剩余文件，请检查数据结构为【Z, N, {model}, AME】(单位：KeM）')
 except:
     print('未找到新的质量剩余文件')
 # 临时数据：
@@ -231,7 +231,7 @@ for reaction in reactions:
     if tag == 0 :
         continue
     the_txt = (f'single_rate\n'
-                f'my_ws4\n'
+                f'{model}\n'
                 f'1\n'
                 f'{reaction}\n'
                 f'3\n'
@@ -372,7 +372,7 @@ def run(cp:int,max_threads:int,model:str):
     subprocess.run(cmd, shell=True)
     ### 将结果写入生成修改 β 反应率修改文件
     comment_1 = (f'rate_table\n'
-               f'my_ws4\n'
+               f'{model}\n'
                f'2\n'
                f'n\n'
                f'{nuc_1_name}\n'

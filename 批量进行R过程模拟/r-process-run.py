@@ -2,6 +2,7 @@
 #使用前先开启 conda 环境
 import os
 import subprocess
+import sys
 import threading
 
 # Ye 列表
@@ -9,7 +10,7 @@ Yes = [0.45]
 # S 列表
 Ss = range(150,351,5)
 # 质量模型列表（jina， ws4）
-models = ['AME+WS4']
+models = sys.argv[1:] #例：['AME+WS4']
 
 
 sem = threading.Semaphore(50)
