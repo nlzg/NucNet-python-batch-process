@@ -8,9 +8,9 @@ import threading
 from tqdm import tqdm
 
 #质量模型的名字
-model = sys.argv[1] #例：'WS4'
+model = sys.argv[2] #例：'WS4'
 # 最大并发数
-MAX_THREADS = int(sys.argv[2]) #例：50
+MAX_THREADS = int(sys.argv[1]) #例：50
 
 # 元素符号列表：索引=原子序数-1
 element = [
@@ -317,7 +317,7 @@ semaphore = threading.Semaphore(MAX_THREADS)
 path_switch_gamma_rate = os.path.join('.', f'{model}', 'switch_gamma_rate.txt')
 file_lock = threading.Lock()
 ## 定义一个单次计算函数
-def run(cp:int,max_threads:int,model:str):
+def run(cp:int, model:str):
     semaphore.acquire()
     ### 创建运行目录
     dir_run = os.path.join('/', 'home', 'xsli', 'projects', 'talys', f'{model}', f'run_{cp}')
@@ -401,16 +401,16 @@ def run(cp:int,max_threads:int,model:str):
 total = len(reactions)
 threads = []
 for i in range(total):
-    t = threading.Thread(target=run, args=(i + 1, total, model))
+    t = threading.Thread(target=run, args=(i + 1, model))
     t.start()
     threads.append(t)
-for t in tqdm(threads, desc="计算进度:"):
+for t in tqdm(threads, desc="计算进度"):
     t.join()
 print('已生成用于修改 (n,γ) 反应率的文件')
 
 # %% 第五部分：生成新的网络文件
 dir_misc = os.path.join('/', 'home', 'xsli', 'projects', 'nucnet-tools-code', 'examples', 'misc')
-path_old_nuc = os.path.join('.', 'old', 'nuc_old.xml')
+path_old_nuc = os.path.join('.', 'old', 'net_old.xml')
 path_new_nuc = os.path.join('.', f'{model}', f'nuc_{model}.xml')
 abs_path_old_nuc = os.path.abspath(path_old_nuc)
 abs_path_switch_mass_excess = os.path.abspath(path_switch_mass_excess)
@@ -427,7 +427,7 @@ abs_path_new_gamma_xml = os.path.abspath(path_new_gamma_xml)
 cmd = (f'python3 create_reaction_xml.py {abs_path_switch_beta_rate} {abs_path_new_beta_xml} && '
        f'python3 create_reaction_xml.py {abs_path_switch_gamma_rate} {abs_path_new_gamma_xml}')
 subprocess.run(cmd, shell=True, check=True)
-path_old_react = os.path.join('.', 'old','react_old.xml')
+path_old_react = os.path.join('.', 'old','net_old.xml')
 path_new_react = os.path.join('.', f'{model}', f'react_{model}.xml')
 path_new_net = os.path.join('.', f'{model}', f'net_{model}.xml')
 abs_path_old_react = os.path.abspath(path_old_react)

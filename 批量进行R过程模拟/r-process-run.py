@@ -5,15 +5,17 @@ import subprocess
 import sys
 import threading
 
+from tqdm import tqdm
+
 # Ye 列表
 Yes = [0.45]
 # S 列表
 Ss = range(150,351,5)
 # 质量模型列表（jina， ws4）
-models = sys.argv[1:] #例：['AME+WS4']
-
-
-sem = threading.Semaphore(50)
+models = sys.argv[2:] #例：['AME+WS4']
+# 最大并发数
+MAX_THREADS = int(sys.argv[1]) #例：50
+sem = threading.Semaphore(MAX_THREADS)
 #定义一个单次计算函数
 def run(model, Ye, S):
 
@@ -84,6 +86,7 @@ def run(model, Ye, S):
     sem.release()
 
 print('开始计算')
+## 启动多线程
 threads = []
 for model in models:
     for Ye in Yes:
@@ -91,6 +94,7 @@ for model in models:
             t = threading.Thread(target=run, args=(model, Ye, S))
             threads.append(t)
             t.start()
-for t in threads:
+for t in tqdm(threads, desc="计算进度"):
     t.join()
+
 print('全部计算完成')
